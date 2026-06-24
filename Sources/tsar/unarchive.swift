@@ -17,10 +17,12 @@ struct Unarchive: ParsableCommand {
     @Argument(help: "Output directory for extracted files.")
     var outputPath: String
 
-    @Option(shortName: "m", help: "Extraction mode (raw or streaming).")
+    @Option(
+        name: [.customShort("m"), .customLong("unarchiver-mode")],
+        help: "Extraction mode (raw or streaming).")
     var unarchiverMode: UnarchiverMode = .raw
 
-    @Flag(shortName: "v", help: "Enable verbose output.")
+    @Flag(name: .shortAndLong, help: "Enable verbose output.")
     var verbose: Bool = false
 
     mutating func run() {

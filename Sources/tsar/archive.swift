@@ -17,19 +17,27 @@ struct Archive: ParsableCommand {
     @Argument(help: "The output path and name of the archive.")
     var outputPath: String
 
-    @Option(shortName: "m", help: "Writer mode (complete or deterministic).")
+    @Option(
+        name: [.customShort("m"), .customLong("writer-mode")],
+        help: "Writer mode (complete or deterministic).")
     var writerMode: WriterMode = .deterministic
 
-    @Flag(shortName: "c", help: "Continue archiving entries even if some are missing.")
+    @Flag(
+        name: [.customShort("c"), .customLong("continue-if-error")],
+        help: "Continue archiving entries even if some are missing.")
     var continueIfError: Bool = false
 
-    @Flag(shortName: "s", help: "Skip archiving hidden files found in the folder (and subfolders).")
+    @Flag(
+        name: [.customShort("s"), .customLong("skip-hidden-files")],
+        help: "Skip archiving hidden files found in the folder (and subfolders).")
     var skipHiddenFiles: Bool = false
 
-    @Flag(shortName: "f", help: "Override existing output file.")
+    @Flag(
+        name: [.customShort("f"), .customLong("allow-override")],
+        help: "Override existing output file.")
     var allowOverride: Bool = false
 
-    @Flag(shortName: "v", help: "Enable verbose output.")
+    @Flag(name: .shortAndLong, help: "Enable verbose output.")
     var verbose: Bool = false
 
     func addFileToArchive(writer: inout Tar.TarWriter, filePath: String, archivePath: String)
