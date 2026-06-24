@@ -4,33 +4,32 @@ import Tar
 
 struct Archive: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "Compress a file or a folder as a tar file.")
+        commandName: "archive",
+        abstract: "Compress a file or folder into a tar archive.")
 
     enum WriterMode: String, ExpressibleByArgument {
         case deterministic, complete
     }
 
-    @Argument(help: "The path of the document to archive.")
+    @Argument(help: "The path to the file or folder to archive.")
     var documentPath: String
 
     @Argument(help: "The output path and name of the archive.")
     var outputPath: String
 
-    @Option(help: "The kind of writer to use (complete, deterministic).")
+    @Option(shortName: "m", help: "Writer mode (complete or deterministic).")
     var writerMode: WriterMode = .deterministic
 
-    @Option(help: "Continue archiving files and directories even if some files are missing.")
+    @Flag(shortName: "c", help: "Continue archiving entries even if some are missing.")
     var continueIfError: Bool = false
 
-    @Option(help: "Skip archiving hidden files found in the folder (and subfolder).")
+    @Flag(shortName: "s", help: "Skip archiving hidden files found in the folder (and subfolders).")
     var skipHiddenFiles: Bool = false
 
-    @Option(
-        help: "Allow override an existing archive, if the output path points to an existing file.")
+    @Flag(shortName: "f", help: "Override existing output file.")
     var allowOverride: Bool = false
 
-    @Option(
-        help: "Active verbose output.")
+    @Flag(shortName: "v", help: "Enable verbose output.")
     var verbose: Bool = false
 
     func addFileToArchive(writer: inout Tar.TarWriter, filePath: String, archivePath: String)
@@ -58,7 +57,7 @@ struct Archive: ParsableCommand {
         }
     }
 
-    func addFolderToArchitect(writer: inout Tar.TarWriter, folderPath: String) {
+    func addFolderToArchive(writer: inout Tar.TarWriter, folderPath: String) {
         writer.appendDir(path: folderPath)
     }
 
@@ -121,7 +120,7 @@ struct Archive: ParsableCommand {
                     }
                 } else if resourceValues.isDirectory ?? false {
                     if self.verbose { print(">> Found directory: \(resourceValues)") }
-                    addFolderToArchitect(writer: &writer, folderPath: relativePath)
+                    addFolderToArchive(writer: &writer, folderPath: relativePath)
                 }
             } catch {
                 print(FileError.FileOperation(docPath))

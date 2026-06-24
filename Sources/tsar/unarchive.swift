@@ -4,23 +4,23 @@ import Tar
 
 struct Unarchive: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "Decompress an archive.")
+        commandName: "unarchive",
+        abstract: "Extract files from a tar archive.")
 
     enum UnarchiverMode: String, ExpressibleByArgument {
         case streaming, raw
     }
 
-    @Argument(help: "The path of the document to unarchive.")
+    @Argument(help: "The path to the archive file.")
     var archivePath: String
 
-    @Argument(help: "The output path to uncompress the archive and store the result.")
+    @Argument(help: "Output directory for extracted files.")
     var outputPath: String
 
-    @Option(help: "The kind of unarchiver to use (raw, streaming).")
+    @Option(shortName: "m", help: "Extraction mode (raw or streaming).")
     var unarchiverMode: UnarchiverMode = .raw
 
-    @Option(
-        help: "Active verbose output.")
+    @Flag(shortName: "v", help: "Enable verbose output.")
     var verbose: Bool = false
 
     mutating func run() {

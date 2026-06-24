@@ -4,6 +4,7 @@ import Tar
 
 struct List: ParsableCommand {
     static let configuration = CommandConfiguration(
+        commandName: "list",
         abstract: "Lists an archive.")
 
     @Argument(help: "The path of the document to unarchive.")
