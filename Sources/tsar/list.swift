@@ -5,9 +5,9 @@ import Tar
 struct List: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "list",
-        abstract: "Lists an archive.")
+        abstract: "List contents of a tar archive.")
 
-    @Argument(help: "The path of the document to unarchive.")
+    @Argument(help: "The path to the archive file.")
     var archivePath: String
 
     mutating func run() throws {
@@ -33,14 +33,19 @@ struct List: ParsableCommand {
         let archive = Tar.Archive(data: archiveContent)
 
         var totalBytes: UInt64 = 0
+        var entryCount = 0
 
         for entry in archive {
+            entryCount += 1
             let path = entry.fields.path()
             let size = entry.fields.size
             totalBytes += size
-            print("* \(path) (\(size) bytes)")
+            let sizeString = ByteCountFormatter().string(fromByteCount: Int64(size))
+            let typeDescription = entryTypeDescription(entry.fields.effectiveEntryType())
+            print("* \(path) (\(sizeString), \(typeDescription))")
         }
 
-        print("Total bytes: \(totalBytes) bytes")
+        let totalString = ByteCountFormatter().string(fromByteCount: Int64(totalBytes))
+        print("Total: \(totalString) in \(entryCount) entries")
     }
 }

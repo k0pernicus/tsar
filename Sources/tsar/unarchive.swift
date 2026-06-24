@@ -49,6 +49,16 @@ struct Unarchive: ParsableCommand {
 
             let archive = Tar.Archive(data: data)
             do {
+                // Print entries in verbose mode
+                if self.verbose {
+                    for entry in archive {
+                        let path = entry.fields.path()
+                        let size = entry.fields.size
+                        let sizeString = ByteCountFormatter().string(fromByteCount: Int64(size))
+                        let typeDescription = entryTypeDescription(entry.fields.effectiveEntryType())
+                        print(">> Extracting: \(path) (\(sizeString), \(typeDescription))")
+                    }
+                }
                 let _ = try Tar.TarExtractor().extract(archive, to: self.outputPath)
                 return
             } catch {
@@ -70,6 +80,18 @@ struct Unarchive: ParsableCommand {
                     guard !chunkData.isEmpty else { break }
                     let chunk = Array(chunkData)
                     let events = try reader.append(chunk)
+                    // Print entries in verbose mode
+                    if self.verbose {
+                        for event in events {
+                            if case .entryStart(let fields) = event {
+                                let path = fields.path()
+                                let size = fields.size
+                                let sizeString = ByteCountFormatter().string(fromByteCount: Int64(size))
+                                let typeDescription = entryTypeDescription(fields.effectiveEntryType())
+                                print(">> Extracting: \(path) (\(sizeString), \(typeDescription))")
+                            }
+                        }
+                    }
                     try extractor.consume(events)
                 }
 

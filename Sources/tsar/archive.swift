@@ -109,7 +109,7 @@ struct Archive: ParsableCommand {
         while let url = enumerator?.nextObject() as? URL {
             do {
                 let resourceValues = try url.resourceValues(forKeys: [
-                    .isRegularFileKey, .isDirectoryKey,
+                    .isRegularFileKey, .isDirectoryKey, .fileSizeKey,
                 ])
 
                 let resourcePath = url.path
@@ -119,7 +119,11 @@ struct Archive: ParsableCommand {
                     ? resourcePath : String(resourcePath.dropFirst(parentPrefix.count))
 
                 if resourceValues.isRegularFile ?? false {
-                    if self.verbose { print(">> Found file: \(resourceValues)") }
+                    let fileSize = resourceValues.fileSize ?? 0
+                    let sizeString = ByteCountFormatter().string(fromByteCount: Int64(fileSize))
+                    if self.verbose {
+                        print(">> Found file: \(relativePath) (\(sizeString))")
+                    }
                     if let err = addFileToArchive(
                         writer: &writer, filePath: resourcePath, archivePath: relativePath)
                     {
@@ -127,7 +131,9 @@ struct Archive: ParsableCommand {
                         if self.continueIfError { continue } else { return }
                     }
                 } else if resourceValues.isDirectory ?? false {
-                    if self.verbose { print(">> Found directory: \(resourceValues)") }
+                    if self.verbose {
+                        print(">> Found directory: \(relativePath)/")
+                    }
                     addFolderToArchive(writer: &writer, folderPath: relativePath)
                 }
             } catch {
