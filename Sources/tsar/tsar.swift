@@ -3,9 +3,9 @@ import Foundation
 import Tar
 
 @main
-struct Tars: ParsableCommand {
+struct Tsar: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "A utility to operate with tar files",
+        abstract: "A utility for building and extracting TAR archives",
         version: "0.1.0",
         subcommands: [Archive.self, Unarchive.self],
     )

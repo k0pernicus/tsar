@@ -1,6 +1,6 @@
-# Tars
+# Tsar
 
-Tars is a CLI command that compresses and uncompresses tar files.  
+Tsar is a CLI command that compresses and uncompresses tar files.  
 This tool uses the [swift-tar](https://github.com/kateinoigakukun/swift-tar) library as a backend.
 
 ## Build
@@ -24,15 +24,15 @@ swift build -c release
 ### Archive
 
 ```sh
-tars archive --help # to get help for archive subcommand
-tars archive <INPUT_FOLDER> <OUTPUT_PATH/OUTPUT_FILE>
+tsar archive --help # to get help for archive subcommand
+tsar archive <INPUT_FOLDER> <OUTPUT_PATH/OUTPUT_FILE>
 ```
 
 ### Unarchive
 
 ```sh
-tars unarchive --help # to get help for unarchive subcommand
-tars unarchive <ARCHIVE_FILE> <OUTPUT_PATH>
+tsar unarchive --help # to get help for unarchive subcommand
+tsar unarchive <ARCHIVE_FILE> <OUTPUT_PATH>
 ```
 
 ## License
