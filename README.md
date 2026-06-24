@@ -21,6 +21,13 @@ swift build -c release
 
 ## Usage
 
+### List
+
+```sh
+tsar list --help # to get help for list subcommand
+tsar list <ARCHIVE_FILE>
+```
+
 ### Archive
 
 ```sh
