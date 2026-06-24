@@ -33,7 +33,7 @@ struct Archive: ParsableCommand {
         help: "Active verbose output.")
     var verbose: Bool = false
 
-    func addFileToArchive(writer: inout Tar.TarWriter, filePath: String) -> Error? {
+    func addFileToArchive(writer: inout Tar.TarWriter, filePath: String, archivePath: String) -> Error? {
         if !FileManager.default.fileExists(atPath: filePath) {
             return FileError.FileNotFound(filePath)
         }
@@ -46,7 +46,7 @@ struct Archive: ParsableCommand {
             fileHeader.setMode(0o644)
 
             if let fileData = FileManager.default.contents(atPath: filePath) {
-                writer.appendData(header: fileHeader, path: filePath, data: fileData)
+                writer.appendData(header: fileHeader, path: archivePath, data: fileData)
                 return nil
             } else {
                 return FileError.FileNotFound(filePath)
@@ -77,8 +77,23 @@ struct Archive: ParsableCommand {
 
         let enumeratorOptions: FileManager.DirectoryEnumerationOptions =
             self.skipHiddenFiles ? [.skipsHiddenFiles] : []
+        
+        // Normalize documentPath: remove trailing slashes
+        let documentURL = URL(fileURLWithPath: self.documentPath)
+        var docPath = documentURL.path
+        while docPath.hasSuffix("/") {
+            docPath = String(docPath.dropLast())
+        }
+        let normalizedURL = URL(fileURLWithPath: docPath)
+        
+        // Calculate parent path to preserve the folder name in archive
+        let parentURL = normalizedURL.deletingLastPathComponent()
+        let parentPath = parentURL.path
+        let parentPrefix = parentPath.isEmpty ? "" : (parentPath.hasSuffix("/") ? parentPath : parentPath + "/")
+        
         let enumerator = FileManager.default.enumerator(
-            at: URL(string: self.documentPath)!, includingPropertiesForKeys: [],
+            at: normalizedURL,
+            includingPropertiesForKeys: [],
             options: enumeratorOptions)
 
         while let url = enumerator?.nextObject() as? URL {
@@ -88,11 +103,13 @@ struct Archive: ParsableCommand {
                 ])
 
                 let resourcePath = url.path
+                // Strip parent prefix to preserve folder name (e.g., archive X/ -> X/file.txt, not file.txt)
+                let relativePath = parentPrefix.isEmpty ? resourcePath : String(resourcePath.dropFirst(parentPrefix.count))
 
                 if resourceValues.isRegularFile ?? false {
                     if self.verbose { print(">> Found file: \(resourceValues)") }
                     if let err = addFileToArchive(
-                        writer: &writer, filePath: resourcePath)
+                        writer: &writer, filePath: resourcePath, archivePath: relativePath)
                     {
                         print(
                             "Error adding file \(resourceValues.canonicalPath!) to the archive: \(err)"
@@ -101,9 +118,7 @@ struct Archive: ParsableCommand {
                     }
                 } else if resourceValues.isDirectory ?? false {
                     if self.verbose { print(">> Found directory: \(resourceValues)") }
-                    if let resourcePath = resourceValues.path {
-                        addFolderToArchitect(writer: &writer, folderPath: resourcePath)
-                    }
+                    addFolderToArchitect(writer: &writer, folderPath: relativePath)
                 }
             } catch {
                 print("Error: processing document to archive failed")
