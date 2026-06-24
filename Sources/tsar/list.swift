@@ -16,7 +16,7 @@ struct List: ParsableCommand {
         }
 
         if !FileManager.default.fileExists(atPath: archivePath) {
-            print("Error: archive not found.")
+            print(FileError.FileNotFound(archivePath))
             return
         }
         guard FileManager.default.isReadableFile(atPath: self.archivePath) else {
@@ -25,7 +25,7 @@ struct List: ParsableCommand {
         }
 
         guard let archiveContent = readFileAsBytes(atPath: self.archivePath) else {
-            print("Error: cannot read the archive as bytes.")
+            print(FileError.FileOperation(archivePath))
             return
         }
 

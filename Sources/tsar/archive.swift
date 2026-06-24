@@ -33,7 +33,9 @@ struct Archive: ParsableCommand {
         help: "Active verbose output.")
     var verbose: Bool = false
 
-    func addFileToArchive(writer: inout Tar.TarWriter, filePath: String, archivePath: String) -> Error? {
+    func addFileToArchive(writer: inout Tar.TarWriter, filePath: String, archivePath: String)
+        -> Error?
+    {
         if !FileManager.default.fileExists(atPath: filePath) {
             return FileError.FileNotFound(filePath)
         }
@@ -68,7 +70,7 @@ struct Archive: ParsableCommand {
         }
 
         if !FileManager.default.fileExists(atPath: documentPath) {
-            print("Error: document not found.")
+            print(FileError.FileNotFound(documentPath))
             return
         }
 
@@ -77,7 +79,7 @@ struct Archive: ParsableCommand {
 
         let enumeratorOptions: FileManager.DirectoryEnumerationOptions =
             self.skipHiddenFiles ? [.skipsHiddenFiles] : []
-        
+
         // Normalize documentPath: remove trailing slashes
         let documentURL = URL(fileURLWithPath: self.documentPath)
         var docPath = documentURL.path
@@ -85,12 +87,13 @@ struct Archive: ParsableCommand {
             docPath = String(docPath.dropLast())
         }
         let normalizedURL = URL(fileURLWithPath: docPath)
-        
+
         // Calculate parent path to preserve the folder name in archive
         let parentURL = normalizedURL.deletingLastPathComponent()
         let parentPath = parentURL.path
-        let parentPrefix = parentPath.isEmpty ? "" : (parentPath.hasSuffix("/") ? parentPath : parentPath + "/")
-        
+        let parentPrefix =
+            parentPath.isEmpty ? "" : (parentPath.hasSuffix("/") ? parentPath : parentPath + "/")
+
         let enumerator = FileManager.default.enumerator(
             at: normalizedURL,
             includingPropertiesForKeys: [],
@@ -104,16 +107,16 @@ struct Archive: ParsableCommand {
 
                 let resourcePath = url.path
                 // Strip parent prefix to preserve folder name (e.g., archive X/ -> X/file.txt, not file.txt)
-                let relativePath = parentPrefix.isEmpty ? resourcePath : String(resourcePath.dropFirst(parentPrefix.count))
+                let relativePath =
+                    parentPrefix.isEmpty
+                    ? resourcePath : String(resourcePath.dropFirst(parentPrefix.count))
 
                 if resourceValues.isRegularFile ?? false {
                     if self.verbose { print(">> Found file: \(resourceValues)") }
                     if let err = addFileToArchive(
                         writer: &writer, filePath: resourcePath, archivePath: relativePath)
                     {
-                        print(
-                            "Error adding file \(resourceValues.canonicalPath!) to the archive: \(err)"
-                        )
+                        print(err)
                         if self.continueIfError { continue } else { return }
                     }
                 } else if resourceValues.isDirectory ?? false {
@@ -121,7 +124,7 @@ struct Archive: ParsableCommand {
                     addFolderToArchitect(writer: &writer, folderPath: relativePath)
                 }
             } catch {
-                print("Error: processing document to archive failed")
+                print(FileError.FileOperation(docPath))
                 return
             }
         }

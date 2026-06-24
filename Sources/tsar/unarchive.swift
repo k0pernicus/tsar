@@ -30,7 +30,7 @@ struct Unarchive: ParsableCommand {
         }
 
         if !FileManager.default.fileExists(atPath: archivePath) {
-            print("Error: archive not found.")
+            print(FileError.FileNotFound(archivePath))
             return
         }
         guard FileManager.default.isReadableFile(atPath: self.archivePath) else {
@@ -41,7 +41,7 @@ struct Unarchive: ParsableCommand {
         switch self.unarchiverMode {
         case .raw:
             guard let data = readFileAsBytes(atPath: self.archivePath) else {
-                print("Error: cannot read the archive as bytes.")
+                print(FileError.FileOperation(archivePath))
                 return
             }
 
@@ -50,7 +50,7 @@ struct Unarchive: ParsableCommand {
                 let _ = try Tar.TarExtractor().extract(archive, to: self.outputPath)
                 return
             } catch {
-                print("Error: cannot extract content from archive.")
+                print(FileError.FileOperation(archivePath))
                 return
             }
         case .streaming:
@@ -61,7 +61,7 @@ struct Unarchive: ParsableCommand {
                     forReadingFrom: URL(fileURLWithPath: self.archivePath))
                 defer { fileHandle.closeFile() }
 
-                let chunkSize: Int = 8096
+                let chunkSize: Int = 8192
 
                 while true {
                     let chunkData = fileHandle.readData(ofLength: chunkSize)
@@ -74,8 +74,7 @@ struct Unarchive: ParsableCommand {
                 try extractor.consume(reader.finish())
                 let _ = try extractor.finish()
             } catch {
-
-                print("Error: non implemented behaviour.")
+                print(FileError.FileOperation(archivePath))
                 return
             }
         }
