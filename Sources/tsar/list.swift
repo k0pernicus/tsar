@@ -31,10 +31,15 @@ struct List: ParsableCommand {
 
         let archive = Tar.Archive(data: archiveContent)
 
+        var totalBytes: UInt64 = 0
+
         for entry in archive {
             let path = entry.fields.path()
             let size = entry.fields.size
+            totalBytes += size
             print("* \(path) (\(size) bytes)")
         }
+
+        print("Total bytes: \(totalBytes) bytes")
     }
 }
