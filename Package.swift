@@ -24,7 +24,10 @@ let package = Package(
         ),
         .testTarget(
             name: "tsarTests",
-            dependencies: ["tsar"]
+            dependencies: [
+                "tsar",
+                .product(name: "Tar", package: "swift-tar"),
+            ]
         ),
     ],
     swiftLanguageModes: [.v6]
