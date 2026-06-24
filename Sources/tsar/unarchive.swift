@@ -3,7 +3,6 @@ import Foundation
 import Tar
 
 struct Unarchive: ParsableCommand {
-
     static let configuration = CommandConfiguration(
         abstract: "Decompress an archive.")
 
@@ -38,13 +37,14 @@ struct Unarchive: ParsableCommand {
             print("Error: archive is not readable.")
             return
         }
-        guard let data = readFileAsBytes(atPath: self.archivePath) else {
-            print("Error: cannot read the archive as bytes.")
-            return
-        }
 
         switch self.unarchiverMode {
         case .raw:
+            guard let data = readFileAsBytes(atPath: self.archivePath) else {
+                print("Error: cannot read the archive as bytes.")
+                return
+            }
+
             let archive = Tar.Archive(data: data)
             do {
                 let _ = try Tar.TarExtractor().extract(archive, to: self.outputPath)
@@ -54,9 +54,30 @@ struct Unarchive: ParsableCommand {
                 return
             }
         case .streaming:
-            // TODO
-            print("Error: non implemented behaviour.")
-            return
+            var reader = Tar.TarReader()
+            do {
+                var extractor = try Tar.TarExtractor().streamingExtractor(to: self.outputPath)
+                let fileHandle = try FileHandle(
+                    forReadingFrom: URL(fileURLWithPath: self.archivePath))
+                defer { fileHandle.closeFile() }
+
+                let chunkSize: Int = 8096
+
+                while true {
+                    let chunkData = fileHandle.readData(ofLength: chunkSize)
+                    guard !chunkData.isEmpty else { break }
+                    let chunk = Array(chunkData)
+                    let events = try reader.append(chunk)
+                    try extractor.consume(events)
+                }
+
+                try extractor.consume(reader.finish())
+                let _ = try extractor.finish()
+            } catch {
+
+                print("Error: non implemented behaviour.")
+                return
+            }
         }
 
     }
