@@ -75,6 +75,8 @@ func getlogger(label: String = "com.k0pernicus.tsar.tests") -> Logger {
     return log
 }
 
+// MARK - Empty directory
+
 // Test of the helpers
 @Test("empty directory")
 func emptyDirectory() throws {
@@ -92,7 +94,9 @@ func emptyDirectory() throws {
     }
 }
 
-@Test("none does not create anything directory")
+// MARK - None should not create any directory
+
+@Test("none does not create any directory")
 func noneCheckDirectory() throws {
     do {
         let tmpDir = try createTestStructure(components: [.none])
@@ -107,6 +111,8 @@ func noneCheckDirectory() throws {
         throw error
     }
 }
+
+// MARK - One file in directory can be archived
 
 @Test("one file in directory")
 func oneDocumentCreation() throws {
@@ -127,6 +133,8 @@ func oneDocumentCreation() throws {
     }
 }
 
+// MARK - One empty directory is, by default, a directory itself
+
 @Test("one empty directory in directory")
 func oneEmptyDirectoryCreation() throws {
     do {
@@ -145,6 +153,8 @@ func oneEmptyDirectoryCreation() throws {
         throw error
     }
 }
+
+// MARK - Check for building complex structures
 
 @Test("complex structure in directory")
 func complexStructureInDirectoryCreation() throws {
