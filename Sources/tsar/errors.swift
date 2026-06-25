@@ -13,3 +13,14 @@ enum FileError: Error, CustomStringConvertible {
         }
     }
 }
+
+enum UserError: Error, CustomStringConvertible {
+    case IsNotADirectory(String)
+
+    // Returns the error as a string
+    var description: String {
+        switch self {
+        case .IsNotADirectory(let path): return "\(path) is not a directory."
+        }
+    }
+}

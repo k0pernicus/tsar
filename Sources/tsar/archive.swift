@@ -81,6 +81,13 @@ struct Archive: ParsableCommand {
             return
         }
 
+        // Check if the input points to a directory, and not to a file
+        let documentURL = URL(fileURLWithPath: self.documentPath)
+        if !documentURL.isDirectory {
+            print(UserError.IsNotADirectory(documentPath))
+            return
+        }
+
         var writer = Tar.TarWriter(
             mode: self.writerMode == WriterMode.deterministic ? .deterministic : .complete)
 
@@ -88,7 +95,6 @@ struct Archive: ParsableCommand {
             self.skipHiddenFiles ? [.skipsHiddenFiles] : []
 
         // Normalize documentPath: remove trailing slashes
-        let documentURL = URL(fileURLWithPath: self.documentPath)
         var docPath = documentURL.path
         while docPath.hasSuffix("/") {
             docPath = String(docPath.dropLast())
@@ -147,7 +153,7 @@ struct Archive: ParsableCommand {
         if !self.allowOverride {
             if FileManager.default.fileExists(atPath: self.outputPath) {
                 print(
-                    "Error: output already exists, do not have the permission to override (check CLI options to override"
+                    "Error: output already exists, do not have the permission to override (check CLI options to override)"
                 )
                 return
             }

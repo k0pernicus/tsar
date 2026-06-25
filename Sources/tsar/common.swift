@@ -34,3 +34,9 @@ func readFileAsBytes(atPath path: String) -> [UInt8]? {
         return nil
     }
 }
+
+extension URL {
+    var isDirectory: Bool {
+        (try? resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
+    }
+}

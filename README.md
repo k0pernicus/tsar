@@ -8,7 +8,7 @@ A fast and pure-Swift command-line tool for creating and extracting TAR archives
 
 ## Features
 
-- Create archives from files and directories
+- Create archives from directories
 - Extract archives with full directory structure preservation
 - Streaming support for memory-efficient handling of large files
 - Cross-platform: macOS, Linux, Windows.
