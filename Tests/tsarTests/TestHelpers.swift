@@ -35,9 +35,12 @@ func createComponent(in folder: URL, component: FileArchitectureComponent) throw
             atPath: buildPath(folder: folder, filename: filename).path,
             contents: generateTextForFile())
     case .directory(let directoryName, let subcomponents):
+        let subpath = buildPath(folder: folder, filename: directoryName)
+        try FileManager.default.createDirectory(
+            at: subpath,
+            withIntermediateDirectories: true)
         for newComponent in subcomponents {
-            try createComponent(
-                in: buildPath(folder: folder, filename: directoryName), component: newComponent)
+            try createComponent(in: subpath, component: newComponent)
         }
     }
 }
@@ -80,6 +83,88 @@ func emptyDirectory() throws {
         // but it does not contain anything
         let dirContent = try FileManager.default.contentsOfDirectory(atPath: tmpDir)
         assert(dirContent.isEmpty)
+    } catch {
+        throw error
+    }
+}
+
+@Test("none does not create anything directory")
+func noneCheckDirectory() throws {
+    do {
+        let tmpDir = try createTestStructure(components: [.none])
+        defer { try? FileManager.default.removeItem(atPath: tmpDir) }
+
+        // temporary folder exists...
+        assert(FileManager.default.fileExists(atPath: tmpDir))
+
+        let dirContent = try FileManager.default.contentsOfDirectory(atPath: tmpDir)
+        assert(dirContent.isEmpty)
+    } catch {
+        throw error
+    }
+}
+
+@Test("one file in directory")
+func oneDocumentCreation() throws {
+    do {
+        let filename = "example.txt"
+        let tmpDir = try createTestStructure(components: [.file(filename)])
+        defer { try? FileManager.default.removeItem(atPath: tmpDir) }
+
+        // temporary folder exists...
+        assert(FileManager.default.fileExists(atPath: tmpDir))
+
+        let dirContent = try FileManager.default.contentsOfDirectory(atPath: tmpDir)
+        assert(!dirContent.isEmpty)
+        assert(dirContent.count == 1)
+        assert(dirContent[0] == filename)
+    } catch {
+        throw error
+    }
+}
+
+@Test("one empty directory in directory")
+func oneEmptyDirectoryCreation() throws {
+    do {
+        let dirname = "example_dir"
+        let tmpDir = try createTestStructure(components: [.directory(dirname, [.none])])
+        defer { try? FileManager.default.removeItem(atPath: tmpDir) }
+
+        // temporary folder exists...
+        assert(FileManager.default.fileExists(atPath: tmpDir))
+
+        let dirContent = try FileManager.default.contentsOfDirectory(atPath: tmpDir)
+        assert(!dirContent.isEmpty)
+        assert(dirContent.count == 1)
+        assert(dirContent[0] == dirname)
+    } catch {
+        throw error
+    }
+}
+
+@Test("complex structure in directory")
+func complexStructureInDirectoryCreation() throws {
+    do {
+        let dirname = "example_dir"
+        let filenameInDir = "example.txt"
+        let tmpDir = try createTestStructure(components: [
+            .directory(dirname, [.file(filenameInDir), .none])
+        ])
+        defer { try? FileManager.default.removeItem(atPath: tmpDir) }
+
+        assert(FileManager.default.fileExists(atPath: tmpDir))
+
+        let dirContent = try FileManager.default.contentsOfDirectory(atPath: tmpDir)
+        assert(!dirContent.isEmpty)
+        assert(dirContent.count == 1)
+        assert(dirContent[0] == dirname)
+
+        let subdirPath = buildPath(folder: URL(string: tmpDir)!, filename: dirname)
+        let subdirContent = try FileManager.default.contentsOfDirectory(
+            atPath: subdirPath.path)
+        assert(!subdirContent.isEmpty)
+        assert(subdirContent.count == 1)
+        assert(subdirContent[0] == filenameInDir)
     } catch {
         throw error
     }
