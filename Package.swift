@@ -11,6 +11,7 @@ let package = Package(
             url: "https://github.com/kateinoigakukun/swift-tar",
             revision: "642cd916016ca6dd8fab8232f31f9fdb459e27b0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.8.2"),
+        .package(url: "https://github.com/apple/swift-log", from: "1.14.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -27,6 +28,7 @@ let package = Package(
             dependencies: [
                 "tsar",
                 .product(name: "Tar", package: "swift-tar"),
+                .product(name: "Logging", package: "swift-log"),
             ]
         ),
     ],
