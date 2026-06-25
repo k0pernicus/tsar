@@ -7,8 +7,11 @@ jobs:
     container:
       image: swift:latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
+      - name: Install dependencies and clone repository
+        run: |
+          apt-get update && apt-get install -y git
+          git clone https://git.carette.xyz/${GITHUB_REPOSITORY}.git .
+          git checkout ${GITHUB_SHA}
+          
       - name: Run tests
         run: make run_tests
