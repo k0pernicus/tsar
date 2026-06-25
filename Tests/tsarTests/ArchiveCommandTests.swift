@@ -25,7 +25,7 @@ import Testing
     let tmpDir = try createTestStructure(components: [.directory("test_dir", [.file("test.txt")])])
     defer { try? FileManager.default.removeItem(atPath: tmpDir) }
 
-    let testDirPath = buildPath(folder: URL(string: tmpDir)!, filename: "test_dir").path
+    let testDirPath = buildPath(folder: URL(string: tmpDir)!, dirname: "test_dir").path
     let outputPath = buildPath(folder: URL(string: tmpDir)!, filename: "output.tar").path
     defer { try? FileManager.default.removeItem(atPath: outputPath) }
 
@@ -38,8 +38,13 @@ import Testing
     // Verify archive contents
     let archive = Tar.Archive(data: Array(try Data(contentsOf: URL(fileURLWithPath: outputPath))))
     let entries = Array(archive)
-    #expect(entries.count == 1)
-    #expect(entries[0].fields.path().hasSuffix("test_dir/test.txt"))
+
+    #expect(entries.count == 2)
+
+    let paths = entries.map { $0.fields.path() }
+
+    #expect(paths.contains(where: { $0.hasSuffix("test_dir/") }))
+    #expect(paths.contains(where: { $0.hasSuffix("test_dir/test.txt") }))
 }
 
 @Test func archiveDirectoryWithFiles() async throws {
@@ -53,7 +58,7 @@ import Testing
     ])
     defer { try? FileManager.default.removeItem(atPath: tmpDir) }
 
-    let testDirPath = buildPath(folder: URL(string: tmpDir)!, filename: "MyApp").path
+    let testDirPath = buildPath(folder: URL(string: tmpDir)!, dirname: "MyApp").path
     let outputPath = buildPath(folder: URL(string: tmpDir)!, filename: "output.tar").path
     defer { try? FileManager.default.removeItem(atPath: outputPath) }
 
@@ -67,9 +72,11 @@ import Testing
     let archive = Tar.Archive(data: Array(try Data(contentsOf: URL(fileURLWithPath: outputPath))))
     let paths = Array(archive).map { $0.fields.path() }
 
-    for path in paths {
-        #expect(path.hasSuffix("MyApp/main.swift") || path.hasSuffix("MyApp/README.md"))
-    }
+    #expect(paths.count == 3)
+
+    #expect(paths.contains(where: { $0.hasSuffix("MyApp/") }))
+    #expect(paths.contains(where: { $0.hasSuffix("MyApp/main.swift") }))
+    #expect(paths.contains(where: { $0.hasSuffix("MyApp/README.md") }))
 }
 
 @Test func archiveNestedDirectoryStructure() async throws {
@@ -93,7 +100,7 @@ import Testing
     ])
     defer { try? FileManager.default.removeItem(atPath: tmpDir) }
 
-    let testDirPath = buildPath(folder: URL(string: tmpDir)!, filename: "Project").path
+    let testDirPath = buildPath(folder: URL(string: tmpDir)!, dirname: "Project").path
     let outputPath = buildPath(folder: URL(string: tmpDir)!, filename: "nested.tar").path
     defer { try? FileManager.default.removeItem(atPath: outputPath) }
 
@@ -121,9 +128,11 @@ import Testing
     let tmpDir = try createTestStructure(components: [.directory("Empty", [])])
     defer { try? FileManager.default.removeItem(atPath: tmpDir) }
 
-    let testDirPath = buildPath(folder: URL(string: tmpDir)!, filename: "Empty").path
+    let testDirPath = buildPath(folder: URL(string: tmpDir)!, dirname: "Empty").path
     let outputPath = buildPath(folder: URL(string: tmpDir)!, filename: "empty.tar").path
     defer { try? FileManager.default.removeItem(atPath: outputPath) }
+
+    #expect(FileManager.default.fileExists(atPath: testDirPath))
 
     var command = try Archive.parse([testDirPath, outputPath])
     command.run()
@@ -134,6 +143,7 @@ import Testing
     // Verify archive contains the empty directory
     let archive = Tar.Archive(data: Array(try Data(contentsOf: URL(fileURLWithPath: outputPath))))
     let paths = Array(archive).map { $0.fields.path() }
+    #expect(paths.count > 0)
 
     for path in paths {
         #expect(path.hasSuffix("Empty/"))
@@ -144,15 +154,17 @@ import Testing
 
 @Test func archiveFilesWithEmojisAndSpaces() async throws {
     let tmpDir = try createTestStructure(components: [
-        .directory("My Folder", [
-            .file("file with spaces.txt"),
-            .file("file with emoji 🎉.txt"),
-            .file("normal.txt")
-        ])
+        .directory(
+            "My Folder",
+            [
+                .file("file with spaces.txt"),
+                .file("file with emoji 🎉.txt"),
+                .file("normal.txt"),
+            ])
     ])
     defer { try? FileManager.default.removeItem(atPath: tmpDir) }
 
-    let testDirPath = buildPath(folder: URL(string: tmpDir)!, filename: "My Folder").path
+    let testDirPath = buildPath(folder: URL(string: tmpDir)!, dirname: "My Folder").path
     let outputPath = buildPath(folder: URL(string: tmpDir)!, filename: "special.tar").path
     defer { try? FileManager.default.removeItem(atPath: outputPath) }
 
@@ -180,22 +192,25 @@ import Testing
 
 @Test func archiveDeterministicAndCompleteModes() async throws {
     let tmpDir = try createTestStructure(components: [
-        .directory("ModeTest", [
-            .file("test.txt")
-        ])
+        .directory(
+            "ModeTest",
+            [
+                .file("test.txt")
+            ])
     ])
     defer { try? FileManager.default.removeItem(atPath: tmpDir) }
 
-    let testDirPath = buildPath(folder: URL(string: tmpDir)!, filename: "ModeTest").path
-    
+    let testDirPath = buildPath(folder: URL(string: tmpDir)!, dirname: "ModeTest").path
+
     // Test deterministic mode
-    let deterministicOutput = buildPath(folder: URL(string: tmpDir)!, filename: "deterministic.tar").path
+    let deterministicOutput = buildPath(folder: URL(string: tmpDir)!, filename: "deterministic.tar")
+        .path
     defer { try? FileManager.default.removeItem(atPath: deterministicOutput) }
 
     var deterministicCommand = try Archive.parse([
         testDirPath,
         deterministicOutput,
-        "--writer-mode", "deterministic"
+        "--writer-mode", "deterministic",
     ])
     deterministicCommand.run()
     #expect(FileManager.default.fileExists(atPath: deterministicOutput))
@@ -207,14 +222,16 @@ import Testing
     var completeCommand = try Archive.parse([
         testDirPath,
         completeOutput,
-        "--writer-mode", "complete"
+        "--writer-mode", "complete",
     ])
     completeCommand.run()
     #expect(FileManager.default.fileExists(atPath: completeOutput))
 
     // Verify both archives contain the expected file
-    let deterministicArchive = Tar.Archive(data: Array(try Data(contentsOf: URL(fileURLWithPath: deterministicOutput))))
-    let completeArchive = Tar.Archive(data: Array(try Data(contentsOf: URL(fileURLWithPath: completeOutput))))
+    let deterministicArchive = Tar.Archive(
+        data: Array(try Data(contentsOf: URL(fileURLWithPath: deterministicOutput))))
+    let completeArchive = Tar.Archive(
+        data: Array(try Data(contentsOf: URL(fileURLWithPath: completeOutput))))
 
     let deterministicPaths = Array(deterministicArchive).map { $0.fields.path() }
     let completePaths = Array(completeArchive).map { $0.fields.path() }
@@ -231,14 +248,16 @@ import Testing
 
 @Test func archiveSkipHiddenFilesFlag() async throws {
     let tmpDir = try createTestStructure(components: [
-        .directory("HiddenTest", [
-            .file("visible.txt"),
-            .file(".hidden.txt")
-        ])
+        .directory(
+            "HiddenTest",
+            [
+                .file("visible.txt"),
+                .file(".hidden.txt"),
+            ])
     ])
     defer { try? FileManager.default.removeItem(atPath: tmpDir) }
 
-    let testDirPath = buildPath(folder: URL(string: tmpDir)!, filename: "HiddenTest").path
+    let testDirPath = buildPath(folder: URL(string: tmpDir)!, dirname: "HiddenTest").path
 
     // Test WITH skip-hidden-files flag
     let outputWithSkip = buildPath(folder: URL(string: tmpDir)!, filename: "with-skip.tar").path
@@ -247,11 +266,12 @@ import Testing
     var commandWithSkip = try Archive.parse([
         testDirPath,
         outputWithSkip,
-        "--skip-hidden-files"
+        "--skip-hidden-files",
     ])
     commandWithSkip.run()
 
-    let archiveWithSkip = Tar.Archive(data: Array(try Data(contentsOf: URL(fileURLWithPath: outputWithSkip))))
+    let archiveWithSkip = Tar.Archive(
+        data: Array(try Data(contentsOf: URL(fileURLWithPath: outputWithSkip))))
     let pathsWithSkip = Array(archiveWithSkip).map { $0.fields.path() }
 
     // Should NOT contain hidden files
@@ -264,16 +284,18 @@ import Testing
     }
 
     // Test WITHOUT skip-hidden-files flag (default behavior)
-    let outputWithoutSkip = buildPath(folder: URL(string: tmpDir)!, filename: "without-skip.tar").path
+    let outputWithoutSkip = buildPath(folder: URL(string: tmpDir)!, filename: "without-skip.tar")
+        .path
     defer { try? FileManager.default.removeItem(atPath: outputWithoutSkip) }
 
     var commandWithoutSkip = try Archive.parse([
         testDirPath,
-        outputWithoutSkip
+        outputWithoutSkip,
     ])
     commandWithoutSkip.run()
 
-    let archiveWithoutSkip = Tar.Archive(data: Array(try Data(contentsOf: URL(fileURLWithPath: outputWithoutSkip))))
+    let archiveWithoutSkip = Tar.Archive(
+        data: Array(try Data(contentsOf: URL(fileURLWithPath: outputWithoutSkip))))
     let pathsWithoutSkip = Array(archiveWithoutSkip).map { $0.fields.path() }
 
     // Should contain both visible and hidden files
@@ -292,7 +314,7 @@ import Testing
     let tmpDir = try createTestStructure(components: [.directory("test_dir", [.file("test.txt")])])
     defer { try? FileManager.default.removeItem(atPath: tmpDir) }
 
-    let testDirPath = buildPath(folder: URL(string: tmpDir)!, filename: "test_dir").path
+    let testDirPath = buildPath(folder: URL(string: tmpDir)!, dirname: "test_dir").path
 
     // Test WITH allow-override flag
     let outputWithOverride = buildPath(folder: URL(string: tmpDir)!, filename: "output.tar").path
@@ -304,28 +326,32 @@ import Testing
     var commandWithOverride = try Archive.parse([
         testDirPath,
         outputWithOverride,
-        "--allow-override"
+        "--allow-override",
     ])
     commandWithOverride.run()
 
     // Verify file was overwritten
-    let archiveWithOverride = Tar.Archive(data: Array(try Data(contentsOf: URL(fileURLWithPath: outputWithOverride))))
+    let archiveWithOverride = Tar.Archive(
+        data: Array(try Data(contentsOf: URL(fileURLWithPath: outputWithOverride))))
     #expect(Array(archiveWithOverride).count > 0)
 
     // Test WITHOUT allow-override flag (default behavior)
-    let outputWithoutOverride = buildPath(folder: URL(string: tmpDir)!, filename: "output2.tar").path
+    let outputWithoutOverride = buildPath(folder: URL(string: tmpDir)!, filename: "output2.tar")
+        .path
     defer { try? FileManager.default.removeItem(atPath: outputWithoutOverride) }
 
     // Create the output file first
-    try? "existing content".data(using: .utf8)?.write(to: URL(fileURLWithPath: outputWithoutOverride))
+    try? "existing content".data(using: .utf8)?.write(
+        to: URL(fileURLWithPath: outputWithoutOverride))
 
     var commandWithoutOverride = try Archive.parse([
         testDirPath,
-        outputWithoutOverride
+        outputWithoutOverride,
     ])
     commandWithoutOverride.run()
 
     // Verify file was NOT overwritten
-    let content = try? String(data: Data(contentsOf: URL(fileURLWithPath: outputWithoutOverride)), encoding: .utf8)
+    let content = try? String(
+        data: Data(contentsOf: URL(fileURLWithPath: outputWithoutOverride)), encoding: .utf8)
     #expect(content == "existing content")
 }

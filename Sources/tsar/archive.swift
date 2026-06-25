@@ -80,9 +80,9 @@ struct Archive: ParsableCommand {
             print(FileError.FileNotFound(documentPath))
             return
         }
-
         // Check if the input points to a directory, and not to a file
-        let documentURL = URL(fileURLWithPath: self.documentPath)
+        // Resolve symlinks so string lengths match the enumerator's paths (handles macOS /var vs /private/var)
+        let documentURL = URL(fileURLWithPath: self.documentPath).resolvingSymlinksInPath()
         if !documentURL.isDirectory {
             print(UserError.IsNotADirectory(documentPath))
             return
@@ -107,6 +107,12 @@ struct Archive: ParsableCommand {
         let parentPrefix =
             parentPath.isEmpty ? "" : (parentPath.hasSuffix("/") ? parentPath : parentPath + "/")
 
+        let rootRelativePath =
+            parentPrefix.isEmpty
+            ? docPath
+            : String(docPath.dropFirst(parentPrefix.count))
+        addFolderToArchive(writer: &writer, folderPath: rootRelativePath)
+
         let enumerator = FileManager.default.enumerator(
             at: normalizedURL,
             includingPropertiesForKeys: [],
@@ -118,7 +124,8 @@ struct Archive: ParsableCommand {
                     .isRegularFileKey, .isDirectoryKey, .fileSizeKey,
                 ])
 
-                let resourcePath = url.path
+                let resolvedURL = url.resolvingSymlinksInPath()
+                let resourcePath = resolvedURL.path
                 // Strip parent prefix to preserve folder name (e.g., archive X/ -> X/file.txt, not file.txt)
                 let relativePath =
                     parentPrefix.isEmpty

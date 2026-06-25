@@ -27,25 +27,29 @@ func buildPath(folder: URL, filename: String) -> URL {
     return folder.appendingPathComponent(filename)
 }
 
-func createComponent(in folder: URL, component: FileArchitectureComponent) throws -> URL {
+func buildPath(folder: URL, dirname: String) -> URL {
+    return folder.appendingPathComponent(dirname, isDirectory: true)
+}
+
+func createComponent(in folder: URL, component: FileArchitectureComponent) throws {
     switch component {
     case .none:
-        return folder
+        return
     case .file(let filename):
         let url = buildPath(folder: folder, filename: filename)
         let _ = FileManager.default.createFile(
             atPath: url.path,
             contents: generateTextForFile())
-        return url
+        return
     case .directory(let directoryName, let subcomponents):
         let subpath = buildPath(folder: folder, filename: directoryName)
         try FileManager.default.createDirectory(
             at: subpath,
             withIntermediateDirectories: true)
         for newComponent in subcomponents {
-            let _ = try createComponent(in: subpath, component: newComponent)
+            try createComponent(in: subpath, component: newComponent)
         }
-        return subpath
+        return
     }
 }
 
@@ -54,7 +58,7 @@ func createTestStructure(components: [FileArchitectureComponent]) throws -> Stri
     try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: true)
 
     for component in components {
-        let _ = try createComponent(in: tmpDir, component: component)
+        try createComponent(in: tmpDir, component: component)
     }
 
     return tmpDir.path
