@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
+      - name: Install Make
+        run: apt-get update && apt-get install -y make
+
       - name: Run tests
         run: make run_tests
