@@ -1,0 +1,14 @@
+name: Swift CI
+on: [push, workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: debian  # Must match the label in runner-config.yml
+    container:
+      image: swift:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Run tests
+        run: make run_tests
