@@ -35,6 +35,8 @@ swift build -c release
 
 The compiled binary will be at: `.build/debug/tsar` or `.build/release/tsar`
 
+A Makefile is available at the root of the project for building the binary (debug or release), running the tests, or cleaning temporary files.
+
 ---
 
 ## Usage
