@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Install dependencies and clone repository
         run: |
-          apt-get update && apt-get install -y git
+          apt-get update && apt-get install -y git make
           git clone https://git.carette.xyz/${GITHUB_REPOSITORY}.git .
           git checkout ${GITHUB_SHA}
           
